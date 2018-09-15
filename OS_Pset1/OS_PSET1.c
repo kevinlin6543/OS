@@ -3,28 +3,29 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-	char *outfile = NULL;
-	int bstatus = 0;
-	int ostatus = 0;
 	int op;
-	int operr;
-	int bufsize;
-	char buf[4096];
+	int opterr = 0;
+	int bufsize = 4096;
+	char *buf;
 	int i;
 	int j;
 	int lim;
 	int start = 1;
 	int arg;
-	int fdi;
+	int fd = 1;
+	int temp;
+	int done = 0;
 
 int concat(int fd, int fp)
 	{
 		i = 1;
 		while(i != 0)
 		{
-			lim = sizeof(buf);
-			i = read(fp,buf,lim);
+			//lim = sizeof(buf);
+			i = read(fp,buf,bufsize);
 			j = write(fd, buf, i);
+			//temp = sizeof(buf)/sizeof(buf[0]);
+			printf("%d\n", i);
 		}
 		return 0;
 	}
@@ -34,50 +35,46 @@ int concat(int fd, int fp)
 int main(int argc, char **argv)
 {
 	// Checks the ops and parameters
-	while ((op = getopt(argc, argv, "b:o:")) != -1)
+	while ((op = getopt(argc, argv, "b:o:?")) != -1 && !done)
 	{
+		switch (op) {
+			case 'b':
+				start += 2;
+				bufsize = atoi(optarg);
+				break;
+			case 'o':
+				start += 2;
+				fd = open(optarg, O_CREAT | O_TRUNC | O_APPEND | O_WRONLY, 0666);
+				break;
+			default:
+				done = 1;
+				break;
+		}
+		/*
 		if (op == 'b')
 		{
 			bufsize = atoi(optarg);
-			printf("%d\n", bufsize);
+			//printf("%d\n", bufsize);
 			start += 2;
-			bstatus = 1;
-
+			//bstatus = 1;
 		}
 		if (op == 'o')
 		{
-			
-			outfile = optarg;
-			printf("%s\n", outfile);
+			//printf("%s\n", optarg);
 			start += 2;
-			ostatus = 1;
+			fd = open(optarg, O_CREAT | O_TRUNC | O_APPEND | O_WRONLY, 0666);
 		}
+		*/
 	}
-	if (ostatus = 1)
-		fdi = open(outfile, O_CREAT | O_TRUNC | O_APPEND | O_WRONLY, 0666);
-	else
-		fdi = 1;
-
-	printf("Amount of Files = %d\n", argc-start);
+	buf = (char *)malloc(sizeof(char) * bufsize);
 	for (arg = start; arg < argc; ++arg)
 	{
-		printf("Arg %d is %s\n", arg, argv[arg]);
+		if (argv[arg][0] == '-')
+			argv[arg]++;
+		//printf("Arg %d is %s\n", arg, argv[arg]);
 		// inputs[filenum] = argv[arg];
-		i = concat(STDOUT_FILENO, open(argv[arg], O_RDONLY, 0666));
-
+		i = concat(fd, open(argv[arg], O_RDONLY, 0666));
 	}
 	return 0;
 
 }
-
-/*
-int openForWrite(char *path)
-{
-	return open(path, O_CREAT | O_TRUNC | O_APPEND | O_WRONLY, 0666);
-}
-
-int openForRead(char *path)
-{
-	return open(path, O_RDONLY, 0666);
-}
-*/
