@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-	int i, j, op, lim, arg, temp, fdinput;
+	int i, j, k, op, lim, arg, temp, fdinput;
 	char *buf;
 	int bufsize = 4096;
 	int start = 1;
@@ -75,7 +75,12 @@ int main(int argc, char **argv)
 					return -1;
 				}
 			}
-			close(fdinput);
+			k = close(fdinput);
+			if (k < 0)
+			{
+				fprintf(stderr, "Unable to close file, %s. %s\n", argv[arg], strerror(errno));
+				return -1;
+			}
 		}
 	}
 	return 0;
