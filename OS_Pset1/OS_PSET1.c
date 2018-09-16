@@ -80,6 +80,7 @@ int main(int argc, char **argv)
 			{
 				fprintf(stderr, "Unable to close file, %s. %s\n", argv[arg], strerror(errno));
 				return -1;
+				
 			}
 		}
 	}
