@@ -37,6 +37,10 @@ int main(int argc, char **argv)
 					return -1;
 				}
 				break;
+			case '?':
+				fprintf(stderr, "Invalid arguement modifier: %c\n", optopt);
+				return -1;
+				break;
 			default:
 				done = 1;
 				break;
@@ -49,38 +53,36 @@ int main(int argc, char **argv)
 	{
 		i = 1;
 		if (argv[arg][0] == '-')
-			argv[arg]++;
-
-		fdinput = open(argv[arg], O_RDONLY, 0666);
-
+			fdinput = 0;
+		else
+			fdinput = open(argv[arg], O_RDONLY, 0666);
 		if (fdinput < 0)
 		{
 			fprintf(stderr, "Unable to open the file, %s, for reading. %s\n", argv[arg], strerror(errno));
 			return -1;
 		}
-		else
+		while(i != 0)
 		{
-			while(i != 0)
+			i = read(fdinput, buf, bufsize);
+			if (i < 0)
 			{
-				i = read(fdinput, buf, bufsize);
-				if (i < 0)
-				{
-					fprintf(stderr, "Unable to read file. File Descriptor: %d. File name: %s. %s\n", fdinput, argv[arg], strerror(errno));
-					return -1;
-				}
-				j = write(fdoutput, buf, i);
-				if (j < 0)
-				{
-					fprintf(stderr, "Unable to write to file. File Descriptor: %d. %s\n", fdoutput, strerror(errno));
-					return -1;
-				}
+				fprintf(stderr, "Unable to read file. File Descriptor: %d. File name: %s. %s\n", fdinput, argv[arg], strerror(errno));
+				return -1;
 			}
+			j = write(fdoutput, buf, i);
+			if (j < 0)
+			{
+				fprintf(stderr, "Unable to write to file. File Descriptor: %d. %s\n", fdoutput, strerror(errno));
+				return -1;
+			}
+		}
+		if (fdinput != 0)
+		{
 			k = close(fdinput);
 			if (k < 0)
 			{
 				fprintf(stderr, "Unable to close file, %s. %s\n", argv[arg], strerror(errno));
 				return -1;
-				
 			}
 		}
 	}
