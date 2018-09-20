@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 				bufsize = atoi(optarg);
 				if (bufsize <= 0)
 				{
-					fprintf(stderr, "Invalid buffer size, %d, chosen. Must be greater than 0", bufsize);
+					fprintf(stderr, "Error: Invalid buffer size, %d, chosen\n", bufsize);
 					return -1;
 				}
 				break;
@@ -33,12 +33,12 @@ int main(int argc, char **argv)
 				fdoutput = open(optarg, O_CREAT | O_TRUNC | O_APPEND | O_WRONLY, 0666);
 				if (fdoutput < 0)
 				{
-					fprintf(stderr, "Unable to Create or open file name: %s. %s\n", optarg, strerror(errno));
+					fprintf(stderr, "Error: Unable to Create or open file name: %s. %s\n", optarg, strerror(errno));
 					return -1;
 				}
 				break;
 			case '?':
-				fprintf(stderr, "Invalid arguement modifier: %c\n", optopt);
+				fprintf(stderr, "Error: Invalid arguement modifier: %c\n", optopt);
 				return -1;
 				break;
 			default:
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 			fdinput = open(argv[arg], O_RDONLY, 0666);
 		if (fdinput < 0)
 		{
-			fprintf(stderr, "Unable to open the file, %s, for reading. %s\n", argv[arg], strerror(errno));
+			fprintf(stderr, "Error: Unable to open the file, %s, for reading. %s\n", argv[arg], strerror(errno));
 			return -1;
 		}
 		while(i != 0)
@@ -66,13 +66,18 @@ int main(int argc, char **argv)
 			i = read(fdinput, buf, bufsize);
 			if (i < 0)
 			{
-				fprintf(stderr, "Unable to read file. File Descriptor: %d. File name: %s. %s\n", fdinput, argv[arg], strerror(errno));
+				fprintf(stderr, "Error: Unable to read file. File Descriptor: %d. File name: %s. %s\n", fdinput, argv[arg], strerror(errno));
 				return -1;
 			}
 			j = write(fdoutput, buf, i);
 			if (j < 0)
 			{
-				fprintf(stderr, "Unable to write to file. File Descriptor: %d. %s\n", fdoutput, strerror(errno));
+				fprintf(stderr, "Error: Unable to write to file. File Descriptor: %d. %s\n", fdoutput, strerror(errno));
+				return -1;
+			}
+			if (i != j)
+			{
+				fprintf(stderr, "Error: Partial Write. Bytes read: %d\n Bytes Wrote: %d\n", i,j);
 				return -1;
 			}
 		}
@@ -81,10 +86,15 @@ int main(int argc, char **argv)
 			k = close(fdinput);
 			if (k < 0)
 			{
-				fprintf(stderr, "Unable to close file, %s. %s\n", argv[arg], strerror(errno));
+				fprintf(stderr, "Error: Unable to close file, %s. %s\n", argv[arg], strerror(errno));
 				return -1;
 			}
 		}
+	}
+	if (arg == start)
+	{
+		fprintf(stderr, "Error: No input file(s) specified.\n");
+		return -1;
 	}
 	return 0;
 }
