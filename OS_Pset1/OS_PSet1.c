@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-	int i, j, k, op, lim, arg, temp, fdinput;
+	int i, j, k, op, lim, arg, fdinput;
 	char *buf;
 	int bufsize = 4096;
 	int fdoutput = 1;
@@ -37,7 +37,6 @@ int main(int argc, char **argv)
 			case '?':
 				fprintf(stderr, "Error: Invalid arguement modifier: %c\n", optopt);
 				return -1;
-				break;
 			default:
 				done = 1;
 				break;
@@ -87,6 +86,5 @@ int main(int argc, char **argv)
 		if (optind == argc)
 			return 0;
 	}
-
 	return 0;
 }
