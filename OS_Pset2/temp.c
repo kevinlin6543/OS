@@ -6,15 +6,17 @@
 #include <string.h>
 #include <errno.h>
 #include <dirent.h>
-#include <limits.h>
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
 
-int i, lastCharSlash;
+int i, lastCharSlash, defFile;
 int firstFile = 1;
 char buf[1024];
-struct tm *mtim, *cTime;
+struct tm mtim, cTime;
+struct passwd *fuid;
+struct group *fgid;
+
 time_t curTime;
 
 char fileType(char* fname, struct stat infoBuf)
@@ -32,6 +34,8 @@ char fileType(char* fname, struct stat infoBuf)
 }
 void printFileInfo(char *filePath, struct stat infoBuf)
 {
+  curTime = time(0);
+  localtime_r(&curTime, &cTime);
   char *sympath;
   if ((lstat(filePath, &infoBuf)) < 0)
   {
@@ -50,20 +54,30 @@ void printFileInfo(char *filePath, struct stat infoBuf)
   printf( (infoBuf.st_mode & S_IWOTH) ? "w" : "-");
   printf( (infoBuf.st_mode & S_IXOTH) ? "x" : "-");
   printf("%*ld ", 4, infoBuf.st_nlink);
-  printf("%s", getpwuid(infoBuf.st_uid)->pw_name);
-  printf(" %s", getgrgid(infoBuf.st_gid)->gr_name);
+  if ((fuid = getpwuid(infoBuf.st_uid)) == NULL)
+  {
+    fprintf(stderr, "Error: UID could not be retrieved from file directory, %s. %s\n", filePath, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  printf("%-8s", fuid->pw_name);
+  if ((fgid = getgrgid(infoBuf.st_uid)) == NULL)
+  {
+    fprintf(stderr, "Error: GID could not be retrieved from file directory, %s. %s\n", filePath, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  printf(" %-8s", fgid->gr_name);
   printf("%*ld", 9, infoBuf.st_size);
-  mtim = localtime(&infoBuf.st_mtime);
-  if ((cTime->tm_yday - mtim->tm_yday) >= 30 || cTime->tm_year - mtim ->tm_year >= 1)
-    strftime(buf, sizeof(buf)-1, "%b %d %Y", mtim);
+  localtime_r(&infoBuf.st_mtime, &mtim);
+  if ((cTime.tm_yday - mtim.tm_yday) > 30 || (cTime.tm_year - mtim.tm_year) >= 1)
+    strftime(buf, sizeof(buf)-1, "%b %-2d  %Y", &mtim);
   else
-    strftime(buf, sizeof(buf)-1, "%b %d %H:%M", mtim);
+    strftime(buf, sizeof(buf)-1, "%b %-2d %H:%M", &mtim);
   printf(" %s", buf);
   if (S_ISLNK(infoBuf.st_mode))
   {
     if ((readlink(filePath, buf, sizeof(buf)-1)) < 0)
     {
-      fprintf(stderr, "The symbolic link file, %s, could not be read for target location. %s\n", filePath, strerror(errno));
+      fprintf(stderr, "Error: The symbolic link file, %s, could not be read for target location. %s\n", filePath, strerror(errno));
       exit(EXIT_FAILURE);
     }
     printf(" %s -> %s\n", filePath, buf);
@@ -83,15 +97,23 @@ void listdir(char *name)
   }
   while ((entry = readdir(dir)) != NULL)
   {
+    if (entry < 0)
+    {
+      fprintf(stderr, "Error: Directory could not be read. %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
     const char *d_name = entry->d_name;
     char path[PATH_MAX];
     struct stat statbuf;
     if (firstFile)
     {
-      printFileInfo(name, statbuf);
+      if (defFile)
+        printFileInfo("./", statbuf);
+      else
+        printFileInfo(name, statbuf);
       firstFile = 0;
       if (lastCharSlash)
-        name[strlen(name)-1] = '\0';
+        name[strlen(name)-1] = 0;
     }
     snprintf(path, PATH_MAX, "%s/%s", name, d_name);
     if (entry->d_type & DT_REG)
@@ -107,8 +129,18 @@ void listdir(char *name)
 }
 int main(int argc, char **argv)
 {
-  time(&curTime);
-  cTime = localtime(&curTime);
+  if (argc == 1)
+  {
+    char *def = ".";
+    defFile = 1;
+    listdir(def);
+    return 0;
+  }
+  else if (argc > 2)
+  {
+    fprintf(stderr, "Error: Too many Arguements listed. Double check file directory name.\n");
+    exit(EXIT_FAILURE);
+  }
   if (argv[1][strlen(argv[1])-1] == '/')
     lastCharSlash = 1;
   listdir(argv[1]);
