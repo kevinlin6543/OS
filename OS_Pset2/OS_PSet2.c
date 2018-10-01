@@ -11,11 +11,12 @@
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
+#include <langinfo.h>
 
 int i, removedSlash;
 int firstFile = 1;
 char buf[1024];
-static char *months[] = { "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+struct tm *mtim;
 
 char fileType(char* fname, struct stat infoBuf)
 {
@@ -29,24 +30,6 @@ char fileType(char* fname, struct stat infoBuf)
     return 'b';
   else
     return '-';
-}
-
-char *fixSpaces(char* fname)
-{
-  char *temp;
-  int j = 0;
-  for(int i = 0; i < strlen(fname) - 1 ; i++, j++)
-  {
-    if (fname[i] == ' ')
-    {
-      temp[j] = '\\';
-      j++;
-      temp[j] = ' ';
-    }
-    else
-      temp[j] = fname[i];
-    return temp;
-  }
 }
 
 void printFileInfo(char *filePath, struct stat infoBuf)
@@ -68,8 +51,8 @@ void printFileInfo(char *filePath, struct stat infoBuf)
   printf(" %s", getgrgid(infoBuf.st_gid)->gr_name);
   printf(" %s", getpwuid(infoBuf.st_uid)->pw_name);
   printf("%*ld", 9, infoBuf.st_size);
-  struct tm *atm = localtime(&infoBuf.st_mtim.tv_sec);
-  strftime(buf, sizeof(buf)-1, "%b %d %H:%m", atm);
+  mtim = localtime(&infoBuf.st_mtime);
+  strftime(buf, sizeof(buf)-1, "%b %d %H:%M", mtim);
   printf(" %s", buf);
   if (S_ISLNK(infoBuf.st_mode))
   {
