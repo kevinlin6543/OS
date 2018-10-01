@@ -10,13 +10,12 @@
 #include <grp.h>
 #include <time.h>
 
-int i, lastCharSlash, defFile;
+int i, lastCharSlash, defFile, path_length;
 int firstFile = 1;
 char buf[1024];
 struct tm mtim, cTime;
 struct passwd *fuid;
 struct group *fgid;
-
 time_t curTime;
 
 char fileType(char* fname, struct stat infoBuf)
@@ -115,7 +114,12 @@ void listdir(char *name)
       if (lastCharSlash)
         name[strlen(name)-1] = 0;
     }
-    snprintf(path, PATH_MAX, "%s/%s", name, d_name);
+    path_length = snprintf(path, PATH_MAX, "%s/%s", name, d_name);
+    if (path_length >= PATH_MAX)
+    {
+      fprintf(stderr, "Error: Path length is too long\n");
+      exit(EXIT_FAILURE);
+    }
     if (entry->d_type & DT_REG)
       printFileInfo(path, statbuf);
     if (entry->d_type & DT_DIR)
