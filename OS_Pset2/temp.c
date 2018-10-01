@@ -11,7 +11,7 @@
 #include <grp.h>
 #include <time.h>
 
-int i, removedSlash;
+int i, lastCharSlash;
 int firstFile = 1;
 char buf[1024];
 struct tm *mtim, *cTime;
@@ -54,7 +54,7 @@ void printFileInfo(char *filePath, struct stat infoBuf)
   printf(" %s", getgrgid(infoBuf.st_gid)->gr_name);
   printf("%*ld", 9, infoBuf.st_size);
   mtim = localtime(&infoBuf.st_mtime);
-  if (cTime->tm_yday - mtim->tm_yday > 30 || cTime->tm_year - mtim ->tm_year >= 1)
+  if ((cTime->tm_yday - mtim->tm_yday) >= 30 || cTime->tm_year - mtim ->tm_year >= 1)
     strftime(buf, sizeof(buf)-1, "%b %d %Y", mtim);
   else
     strftime(buf, sizeof(buf)-1, "%b %d %H:%M", mtim);
@@ -71,70 +71,46 @@ void printFileInfo(char *filePath, struct stat infoBuf)
   else
     printf(" %s\n", filePath);
 }
-
 void listdir(char *name)
 {
   DIR *dir;
+  struct dirent *entry;
+
   if (!(dir = opendir(name)))
   {
     fprintf(stderr, "Error: Directory, %s, could not be opened. %s\n", name, strerror(errno));
     exit(EXIT_FAILURE);
   }
-
-  while (1)
+  while ((entry = readdir(dir)) != NULL)
   {
-    struct dirent *entry;
-    entry = readdir(dir);
-    const char *d_name;
+    const char *d_name = entry->d_name;
+    char path[PATH_MAX];
     struct stat statbuf;
-    if (entry < 0)
+    if (firstFile)
     {
-      fprintf(stderr, "Error: Directory could not be read. %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
+      printFileInfo(name, statbuf);
+      firstFile = 0;
+      if (lastCharSlash)
+        name[strlen(name)-1] = '\0';
     }
-    else if(!entry)
-      break;
-
-    if(firstFile)
-      {
-        char *firstfileName = malloc(strlen(name) + 2);
-        strcpy(firstfileName, name);
-        if (removedSlash)
-          strcat(firstfileName, "/");
-        printFileInfo(firstfileName, statbuf);
-        firstFile = 0;
-      }
-    d_name = entry->d_name;
-    if (strcmp(d_name, "..") != 0 && strcmp(d_name, ".") != 0)
+    snprintf(path, PATH_MAX, "%s/%s", name, d_name);
+    if (entry->d_type & DT_REG)
+      printFileInfo(path, statbuf);
+    if (entry->d_type & DT_DIR)
     {
-      char *result = malloc(strlen(name) + strlen(d_name) + 2);
-      strcpy(result, name);
-      strcat(result, "/");
-      strcat(result, d_name);
-      printFileInfo(result, statbuf);
-    }
-    if (S_ISDIR(entry->d_type))
-    {
-      if (strcmp(d_name, "..") != 0 && strcmp(d_name, ".") != 0)
-      {
-        char path[PATH_MAX];
-        snprintf(path, PATH_MAX, "%s/%s", name, d_name);
-        listdir(path);
-      }
+      if (strcmp(d_name, "..") == 0 || strcmp(d_name, ".") == 0)
+        continue;
+      printFileInfo(path, statbuf);
+      listdir(path);
     }
   }
 }
-int main(int argc, char const *argv[])
+int main(int argc, char **argv)
 {
   time(&curTime);
   cTime = localtime(&curTime);
-  char adjustedName[strlen(argv[1])];
-  strcpy(adjustedName, argv[1]);
-  if(adjustedName[strlen(adjustedName)-1] == '/')
-  {
-    adjustedName[strlen(adjustedName)-1] = 0;
-    removedSlash = 1;
-  }
-  listdir(adjustedName);
+  if (argv[1][strlen(argv[1])-1] == '/')
+    lastCharSlash = 1;
+  listdir(argv[1]);
   return 0;
 }
