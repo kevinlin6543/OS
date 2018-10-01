@@ -1,0 +1,20 @@
+/*
+i = lstat(result, &statbuf);
+printf("  %lu  %*ld ", statbuf.st_ino, 5, statbuf.st_blocks/2);
+printf( (S_ISDIR(statbuf.st_mode)) ? "d" : "-");
+printf( (statbuf.st_mode & S_IRUSR) ? "r" : "-");
+printf( (statbuf.st_mode & S_IWUSR) ? "w" : "-");
+printf( (statbuf.st_mode & S_IXUSR) ? "x" : "-");
+printf( (statbuf.st_mode & S_IRGRP) ? "r" : "-");
+printf( (statbuf.st_mode & S_IWGRP) ? "w" : "-");
+printf( (statbuf.st_mode & S_IXGRP) ? "x" : "-");
+printf( (statbuf.st_mode & S_IROTH) ? "r" : "-");
+printf( (statbuf.st_mode & S_IWOTH) ? "w" : "-");
+printf( (statbuf.st_mode & S_IXOTH) ? "x" : "-");
+printf("%*ld ", 4, statbuf.st_nlink);
+printf(" %s", getgrgid(statbuf.st_gid)->gr_name);
+printf(" %s", getpwuid(statbuf.st_uid)->pw_name);
+printf("%*ld", 9, statbuf.st_size);
+
+printf("     %s/%s\n", name, d_name);
+*/
