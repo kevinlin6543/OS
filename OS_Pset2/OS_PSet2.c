@@ -105,14 +105,14 @@ void listdir(char *name)
     {
       if (strcmp(d_name, "..") != 0 && strcmp(d_name, ".") != 0)
       {
-        int path_length;
+        //int path_length;
         char path[PATH_MAX];
-        path_length = snprintf(path, PATH_MAX, "%s/%s", name, d_name);
-        if (path_length >= PATH_MAX)
-        {
-          fprintf(stderr, "Error: Path length is too long\n");
-          exit(EXIT_FAILURE);
-        }
+        /*path_length = */snprintf(path, PATH_MAX, "%s/%s", name, d_name);
+        //if (path_length >= PATH_MAX)
+      //  {
+        //  fprintf(stderr, "Error: Path length is too long\n");
+        //  exit(EXIT_FAILURE);
+        //}
         listdir(path);
       }
     }
