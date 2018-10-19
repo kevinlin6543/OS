@@ -9,6 +9,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
+#include <limits.h>
 
 int i, lastCharSlash, defFile, path_length;
 int firstFile = 1;
