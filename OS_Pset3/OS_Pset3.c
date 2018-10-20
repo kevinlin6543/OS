@@ -17,7 +17,8 @@
 char *buf;
 //char *path = "/bin/";
 char execpath[PATH_MAX];
-char* token;
+char *token;
+char cwd[PATH_MAX];
 char *argv[100];
 size_t bufsize = 4096;
 ssize_t i;
@@ -31,12 +32,17 @@ int main()
   buf = (char *)malloc(bufsize * sizeof(char));
   while(1)
   {
+    //if (getcwd(cwd, sizeof(cwd)) != NULL)
+    //  printf("$%s ", cwd);
+    //else
     printf("$ ");
     j = 0;
     if((i = getline(&buf, &bufsize, stdin)) > 0)
     {
-      if(buf[i-1] == '\n')
-        buf[i-1] = '\0';
+      if(buf[0] == '#')
+        continue;
+      //if(buf[i-1] == '\n')
+      buf[i-1] = '\0';
       token = strtok(buf, " ");
       while(token)
       {
@@ -46,6 +52,7 @@ int main()
         j++;
       }
       argv[j] = NULL;
+
 
       if(!strcmp("exit", argv[0]))
         _exit(0);
@@ -71,7 +78,8 @@ int main()
               iored = argv[k];
               file = iored + 1;
               argv[k] = NULL;
-              fd = open(iored, O_WRONLY, 0666);
+              if ((fd = open(iored, O_WRONLY, 0666)) < 0)
+                fprintf(stderr, "Error: Unable to open file, %s for writing. %s\n", file, strerror(errno));
               dup2(fd, 0);
               close(fd);
               break;
@@ -81,7 +89,8 @@ int main()
               iored = argv[k];
               argv[k] = NULL;
               file = iored + 1;
-              fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+              if ((fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0)
+                fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
               dup2(fd, 1);
               close(fd);
               break;
@@ -91,7 +100,8 @@ int main()
               iored = argv[k];
               argv[k] = NULL;
               file = iored + 2;
-              fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+              if ((fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0)
+                fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
               dup2(fd, 2);
               close(fd);
               break;
@@ -101,7 +111,8 @@ int main()
               iored = argv[k];
               argv[k] = NULL;
               file = iored + 2;
-              fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666);
+              if ((fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666)) < 0)
+                fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
               dup2(fd, 1);
               close(fd);
               break;
@@ -111,7 +122,8 @@ int main()
               iored = argv[k];
               argv[k] = NULL;
               file = iored + 3;
-              fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666);
+              if ((fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666)) < 0)
+                fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
               dup2(fd, 2);
               close(fd);
               break;
@@ -131,9 +143,6 @@ int main()
           printf("Real time: %ld, User time: %ld, System Time: %ld\n", 1, 2, 3);
           break;
       }
-
-
-
     }
   }
   return 0;
