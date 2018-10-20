@@ -22,10 +22,11 @@ char cwd[PATH_MAX];
 char *argv[100];
 size_t bufsize = 4096;
 ssize_t i;
-int j,k,fd, pid;
+int j,k, n, fd, pid;
 char *file;
 char *iored;
 struct rusage usage;
+double usertime, systime;
 
 int main()
 {
@@ -52,7 +53,6 @@ int main()
         j++;
       }
       argv[j] = NULL;
-
 
       if(!strcmp("exit", argv[0]))
         _exit(0);
@@ -139,8 +139,10 @@ int main()
           break;
 
         default:
-          wait3(NULL, 0, &usage);
-          printf("Real time: %ld, User time: %ld, System Time: %ld\n", 1, 2, 3);
+          n = wait3(NULL, 0, &usage);
+          usertime = (double)usage.ru_utime.tv_usec / 1000000;
+          systime = (double)usage.ru_stime.tv_usec / 1000000;
+          printf("Real time: %f, User time: %f, System Time: %f\n",usertime + systime, usertime, systime);
           break;
       }
     }
