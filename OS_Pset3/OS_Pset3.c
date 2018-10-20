@@ -13,18 +13,16 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-//char buf[4096];
-char *buf;
-//char *path = "/bin/";
+char *buf, *token, *file, *iored;
 char execpath[PATH_MAX];
-char *token;
+//char *token;
 char cwd[PATH_MAX];
 char *argv[100];
 size_t bufsize = 4096;
 ssize_t i;
-int j,k, n, fd, pid;
-char *file;
-char *iored;
+int j, k, n, fd, pid;
+//char *file;
+//char *iored;
 struct rusage usage;
 double usertime, systime;
 
@@ -33,22 +31,17 @@ int main()
   buf = (char *)malloc(bufsize * sizeof(char));
   while(1)
   {
-    //if (getcwd(cwd, sizeof(cwd)) != NULL)
-    //  printf("$%s ", cwd);
-    //else
     printf("$ ");
     j = 0;
     if((i = getline(&buf, &bufsize, stdin)) > 0)
     {
       if(buf[0] == '#')
         continue;
-      //if(buf[i-1] == '\n')
       buf[i-1] = '\0';
       token = strtok(buf, " ");
       while(token)
       {
         argv[j] = token;
-        //fprintf(stderr, "argv[%d] = %s \n", j, argv[j]);
         token = strtok(NULL, " ");
         j++;
       }
