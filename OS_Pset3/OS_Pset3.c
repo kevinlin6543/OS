@@ -11,8 +11,36 @@
 #include <time.h>
 #include <limits.h>
 
-int main(int argc, char const **argv)
-{
+//char buf[4096];
+char *buf;
+char* token;
+char *argv[100];
+size_t bufsize = 4096;
+ssize_t i;
+int j;
 
+int main()
+{
+  buf = (char *)malloc(bufsize * sizeof(char));
+  while(1)
+  {
+    j = 0;
+    if((i = getline(&buf, &bufsize, stdin)) > 0)
+    {
+      buf[i] = '\0';
+      token = strtok(buf, " ");
+      while(token)
+      {
+        argv[j] = token;
+        fprintf(stderr, "argv[%d] = %s \n", j, argv[j]);
+        j++;
+        token = strtok(NULL, " ");
+      }
+      argv[j] = NULL;
+
+      if (!strcmp("cd", argv[0]))
+        fprintf(stderr, "cd\n");
+    }
+  }
   return 0;
 }
