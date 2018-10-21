@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 
 char *buf, *token, *file, *iored, *scriptpath;
-char execpath[PATH_MAX], cwd[PATH_MAX], c;
+char execpath[PATH_MAX], cwd[PATH_MAX];
 char *argv[100];
 size_t bufsize = 4096;
 ssize_t i;
