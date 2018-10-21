@@ -1,0 +1,15 @@
+total 260
+-rwxr-xr-x 1 kevinlin1220 kevinlin1220 13600 Oct  1 15:49 a.out
+drwxrwxr-x 4 kevinlin1220 kevinlin1220  4096 Sep 16 10:48 Awesome-CV-master
+drwxrwxr-x 3 kevinlin1220 kevinlin1220  4096 Sep 23 17:09 DSA
+drwxrwxr-x 4 kevinlin1220 kevinlin1220  4096 Sep 23 17:05 DSAII
+drwxrwxr-x 3 kevinlin1220 kevinlin1220  4096 Sep 25 23:31 Hardware
+-rw-rw-r-- 1 kevinlin1220 kevinlin1220  4566 Sep 16 17:22 Kevin Lin Unofficial Transcript.pdf
+-rw-r--r-- 1 kevinlin1220 kevinlin1220 39366 Oct  1 16:19 o1.txt
+-rw-r--r-- 1 kevinlin1220 kevinlin1220 39476 Oct  1 16:19 o2.txt
+drwxr-xr-x 6 kevinlin1220 kevinlin1220  4096 Oct 19 16:18 OS
+-rw-r--r-- 1 kevinlin1220 kevinlin1220 58582 Oct  1 01:16 output1.txt
+-rw-r--r-- 1 kevinlin1220 kevinlin1220 58543 Oct  1 01:16 output2.txt
+-rw-rw-r-- 1 kevinlin1220 kevinlin1220   357 Oct  1 01:48 p2.c
+-rw-rw-r-- 1 kevinlin1220 kevinlin1220  4840 Feb 19  2018 README.md
+lrwxrwxrwx 1 kevinlin1220 kevinlin1220    19 Sep 30 02:05 test.out -> ./OS/OS_Pset2/a.out
