@@ -2,62 +2,62 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <string.h>
-#include <errno.h>
-#include <dirent.h>
 #include <time.h>
 #include <limits.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/wait.h>
 
-char *buf, *token, *file, *iored;
-char execpath[PATH_MAX], c;
-char *scriptpath;
-char cwd[PATH_MAX];
+char *buf, *token, *file, *iored, *scriptpath;
+char execpath[PATH_MAX], cwd[PATH_MAX], c;
 char *argv[100];
 size_t bufsize = 4096;
 ssize_t i;
-int j, k, n, fd, fds, pid, script;
+int j, k, n, fd, pid, script, p;
 struct rusage usage;
 double usertime, systime;
+FILE *fds;
 
-int scriptread(int filed, char *buffer, int s)
+int tokenize(char *tok, char *v[], char *buffer)
 {
-  k = 0;
-  while ( (i = read(filed, &c, 1)) != 0)
+  p = 0;
+  tok = strtok(buffer, " \n");
+  while(tok)
   {
-    //fprintf(stderr, "read = %ld;chara = %c\n",i, c);
-    if (c == '\0')
-    {
-      s = 0;
-      break;
-    }
-    if (c == '\n')
-    {
-      buffer[k] = '\0';
-      //printf("command = %s\n", buffer);
-      break;
-    }
-    buffer[k] = c;
-    k++;
+    v[p] = tok;
+    tok = strtok(NULL, " \n");
+    p++;
   }
-  return i;
+  v[p] = NULL;
+  return p;
 }
 
 int main()
 {
   buf = (char *)malloc(bufsize * sizeof(char));
+  if (buf == NULL)
+  {
+    fprintf(stderr, "Error: Unable to allocate memory for buffer using malloc. %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
   while(1)
   {
-    //fprintf(stderr, "Loop start\n" );
     j = 0;
     if (!script)
     {
       printf("$ ");
       i = getline(&buf, &bufsize, stdin);
+    }
+    else if (script)
+    {
+      if ((i = getline(&buf, &bufsize, fds)) < 0)
+        {
+          script = 0;
+          fclose(fds);
+          continue;
+        }
     }
     if(script || i > 0)
     {
@@ -66,70 +66,13 @@ int main()
       if (!script)
         buf[i-1] = '\0';
 
-      token = strtok(buf, " ");
-      while(token)
-      {
-        argv[j] = token;
-        fprintf(stderr, "argv[%d] = %s\n", j, argv[j]);
-        token = strtok(NULL, " ");
-        j++;
-      }
-      argv[j] = NULL;
-
-      if(!script && argv[0][0] == '.' && argv[0][1] == '/')
+      j = tokenize(token, argv, buf);
+      if (argv[0][0] == '.' && argv[0][1] == '/')
       {
         script = 1;
         scriptpath = argv[0]+2;
-        fds = open(scriptpath, O_RDONLY);
-        /*k = 0;
-        while ((i = read(fds, &c, 1)) > 0)
-        {
-          fprintf(stderr, "chara = %c\n", c);
-          if (c == '\0')
-          {
-            script = 0;
-            break;
-          }
-          if (c == '\n')
-          {
-            buf[k] = '\0';
-            printf("command = %s\n", buf);
-            break;
-          }
-          buf[k] = c;
-          k++;
-        }*/
-        //scriptread(fds, buf, script);
-        //fprintf(stderr, "got to continue\n");
+        fds = fopen(scriptpath, "r");
         continue;
-      }
-
-      if(script)
-      {
-        //fprintf(stderr, "Enter the script interpreter\n");
-        /*k = 0;
-        while ( (i = read(fds, &c, 1)) != 0)
-        {
-          fprintf(stderr, "read = %ld;chara = %c\n",i, c);
-          if (c == '\0')
-          {
-            script = 0;
-            break;
-          }
-          if (c == '\n')
-          {
-            buf[k] = '\0';
-            printf("command = %s\n", buf);
-            break;
-          }
-          buf[k] = c;
-          k++;
-        }*/
-        if (scriptread(fds, buf, script)==0)
-        {
-          script = 0;
-          close(fds);
-        }
       }
 
       if(!strcmp("exit", argv[0]))
@@ -137,13 +80,12 @@ int main()
 
       if (!strcmp("cd", argv[0]))
       {
-        //fprintf(stderr, "cd\n");
-        chdir(argv[1]);
+        if(chdir(argv[1]) < 0)
+          fprintf(stderr, "Error: Unable to change directories to %s. %s\n", argv[1], strerror(errno));
         continue;
       }
 
       i = snprintf(execpath, PATH_MAX, "/bin/%s", argv[0]);
-      //fprintf(stderr, "%s\n", execpath);
 
       pid = fork();
       switch (pid)
@@ -155,8 +97,7 @@ int main()
             {
               iored = argv[k];
               file = iored + 1;
-              argv[k] = NULL;
-              if ((fd = open(iored, O_WRONLY, 0666)) < 0)
+              if ((fd = open(iored, O_RDONLY, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to open file, %s for writing. %s\n", file, strerror(errno));
               dup2(fd, 0);
               close(fd);
@@ -165,7 +106,6 @@ int main()
             if(argv[k][0] == '>' && argv[k][1] != '>')
             {
               iored = argv[k];
-              argv[k] = NULL;
               file = iored + 1;
               if ((fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
@@ -176,7 +116,6 @@ int main()
             if(argv[k][0] == '2' && argv[k][1] == '>' && argv[k][2] != '>')
             {
               iored = argv[k];
-              argv[k] = NULL;
               file = iored + 2;
               if ((fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
@@ -187,7 +126,6 @@ int main()
             if(argv[k][0] == '>' && argv[k][1] == '>')
             {
               iored = argv[k];
-              argv[k] = NULL;
               file = iored + 2;
               if ((fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
@@ -198,7 +136,6 @@ int main()
             if(argv[k][0] == '2' && argv[k][1] == '>' && argv[k][2] == '>')
             {
               iored = argv[k];
-              argv[k] = NULL;
               file = iored + 3;
               if ((fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
@@ -207,13 +144,14 @@ int main()
               break;
             }
           }
+          argv[k] = NULL;
           execvp(execpath, argv);
-          fprintf(stderr, "Warning: Child process could not execute\n");
+          fprintf(stderr, "Error: Child process could not execute\n");
           exit(0);
           break;
 
         case -1:
-          fprintf(stderr, "Warning: Child process could not be created\n");
+          fprintf(stderr, "Error: Child process could not be created\n");
           break;
 
         default:
