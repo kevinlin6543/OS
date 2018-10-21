@@ -99,7 +99,8 @@ int main()
               file = iored + 1;
               if ((fd = open(iored, O_RDONLY, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to open file, %s for writing. %s\n", file, strerror(errno));
-              dup2(fd, 0);
+              if (dup2(fd, 0) < 0)
+                fprintf(stderr, "Error: Unable to duplicate standard in %s\n", strerror(errno));
               close(fd);
               break;
             }
@@ -109,7 +110,8 @@ int main()
               file = iored + 1;
               if ((fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
-              dup2(fd, 1);
+              if (dup2(fd, 1) < 0)
+                fprintf(stderr, "Error: Unable to duplicate standard out %s\n", strerror(errno));
               close(fd);
               break;
             }
@@ -119,7 +121,8 @@ int main()
               file = iored + 2;
               if ((fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
-              dup2(fd, 2);
+              if (dup2(fd, 2) < 0)
+                fprintf(stderr, "Error: Unable to duplicate standard error %s\n", strerror(errno));
               close(fd);
               break;
             }
@@ -129,7 +132,8 @@ int main()
               file = iored + 2;
               if ((fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
-              dup2(fd, 1);
+              if (dup2(fd, 1) < 0)
+                fprintf(stderr, "Error: Unable to duplicate standard out %s\n", strerror(errno));
               close(fd);
               break;
             }
@@ -139,7 +143,8 @@ int main()
               file = iored + 3;
               if ((fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to create or open file, %s for writing. %s\n", file, strerror(errno));
-              dup2(fd, 2);
+              if (dup2(fd, 2) < 0)
+                fprintf(stderr, "Error: Unable to duplicate standard error %s\n", strerror(errno));
               close(fd);
               break;
             }
