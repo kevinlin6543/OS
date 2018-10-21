@@ -8,54 +8,30 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/wait.h>
 
 char *buf, *token, *file, *iored, *scriptpath;
 char execpath[PATH_MAX], cwd[PATH_MAX], c;
 char *argv[100];
 size_t bufsize = 4096;
 ssize_t i;
-int j, k, n, fd, fds, pid, script, l, p;
+int j, k, n, fd, pid, script, p;
 struct rusage usage;
 double usertime, systime;
+FILE *fds;
 
 int tokenize(char *tok, char *v[], char *buffer)
 {
   p = 0;
-  tok = strtok(buffer, " ");
+  tok = strtok(buffer, " \n");
   while(tok)
   {
     v[p] = tok;
-    fprintf(stderr, "counter = %d; token: %s\n", p, tok);
-    tok = strtok(NULL, " ");
+    tok = strtok(NULL, " \n");
     p++;
   }
   v[p] = NULL;
   return p;
-}
-
-int scriptread(int filed, char *buffer, int s, char **v, char *tok)
-{
-  k = 0;
-  while ( (i = read(filed, &c, 1)) != 0)
-  {
-    if (c == '\0')
-    {
-      s = 0;
-      break;
-    }
-    if (c == '\n')
-    {
-      buffer[k] = '\0';
-      printf("buffer = %s\n", buffer);
-      break;
-    }
-    buffer[k] = c;
-    k++;
-  }
-  if (i < 0)
-    fprintf(stderr, "Error: Unable to read file descriptor, %d. %s\n", filed, strerror(errno));
-  tokenize(tok, v, buffer);
-  return i;
 }
 
 int main()
@@ -64,16 +40,24 @@ int main()
   if (buf == NULL)
   {
     fprintf(stderr, "Error: Unable to allocate memory for buffer using malloc. %s\n", strerror(errno));
-    exit(EXIT_FAILURE); //Critical Error since all other parts of the shell can't run without a buffer.
+    exit(EXIT_FAILURE);
   }
   while(1)
   {
-    fprintf(stderr, "Loop!!!!\n");
     j = 0;
     if (!script)
     {
       printf("$ ");
       i = getline(&buf, &bufsize, stdin);
+    }
+    else if (script)
+    {
+      if ((i = getline(&buf, &bufsize, fds)) < 0)
+        {
+          script = 0;
+          fclose(fds);
+          continue;
+        }
     }
     if(script || i > 0)
     {
@@ -83,32 +67,12 @@ int main()
         buf[i-1] = '\0';
 
       j = tokenize(token, argv, buf);
-      /*token = strtok(buf, " ");
-      while(token)
-      {
-        argv[j] = token;
-        fprintf(stderr, "token: %s\n", token);
-        token = strtok(NULL, " ");
-        j++;
-      }
-      argv[j] = NULL;
-      */
-      if(!script && argv[0][0] == '.' && argv[0][1] == '/')
+      if (argv[0][0] == '.' && argv[0][1] == '/')
       {
         script = 1;
         scriptpath = argv[0]+2;
-        if ((fds = open(scriptpath, O_RDONLY)) < 0)
-          fprintf(stderr, "Error: Unable to open file, %s, for reading. %s\n", scriptpath, strerror(errno));
+        fds = fopen(scriptpath, "r");
         continue;
-      }
-      if(script)
-      {
-        if (scriptread(fds, buf, script, argv, token)==0)
-        {
-          script = 0;
-          if (close(fds) < 0)
-            fprintf(stderr, "Error: Unable to close File Descriptor, %d. %s\n", fds, strerror(errno));
-        }
       }
 
       if(!strcmp("exit", argv[0]))
@@ -120,14 +84,8 @@ int main()
           fprintf(stderr, "Error: Unable to change directories to %s. %s\n", argv[1], strerror(errno));
         continue;
       }
-      //printf("argv[0] = %s\n", argv[0]);
+
       i = snprintf(execpath, PATH_MAX, "/bin/%s", argv[0]);
-      l = 0;
-      if(argv[l] != NULL)
-      {
-        printf("argv[%d] = %s\n", l, argv[l]);
-        l++;
-      }
 
       pid = fork();
       switch (pid)
@@ -139,7 +97,7 @@ int main()
             {
               iored = argv[k];
               file = iored + 1;
-              if ((fd = open(iored, O_WRONLY, 0666)) < 0)
+              if ((fd = open(iored, O_RDONLY, 0666)) < 0)
                 fprintf(stderr, "Error: Unable to open file, %s for writing. %s\n", file, strerror(errno));
               dup2(fd, 0);
               close(fd);
