@@ -1,0 +1,7 @@
+total 36
+-rwxr-xr-x 1 kevinlin1220 kevinlin1220 13984 Oct 21 19:49 a.out
+-rw-r--r-- 1 kevinlin1220 kevinlin1220     0 Oct 21 19:53 garbage
+-rw-rw-r-- 1 kevinlin1220 kevinlin1220  5146 Oct 21 19:44 OS_Pset3.c
+-rw-r--r-- 1 kevinlin1220 kevinlin1220    16 Oct 21 18:00 sample.txt
+-rw-r--r-- 1 kevinlin1220 kevinlin1220   989 Oct 20 16:25 test.txt
+-rw-r--r-- 1 kevinlin1220 kevinlin1220    46 Oct 21 17:54 text.out
