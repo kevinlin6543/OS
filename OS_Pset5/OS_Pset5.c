@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+char *s;
 size_t getFilesize(const char* filename)
 {
     struct stat st;
@@ -21,7 +22,10 @@ int main(int argc, char const *argv[])
     size_t filesize = getFilesize(argv[i]);
     int fd = open(argv[1], O_RDONLY);
     void* mmappedData = mmap(NULL, filesize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_POPULATE, fd, 0);
-    write(1, mmappedData, filesize)
+    while(s = strstr(mmappedData, argv[1]))
+    {
+      strcpy(s, argv[2]);
+    }
     return 0;
   }
 }
